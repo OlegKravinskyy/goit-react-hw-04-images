@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { useState } from 'react';
 import {
   SearchHeader,
   SearchForm,
@@ -9,50 +9,41 @@ import {
 import { ImSearch } from 'react-icons/im';
 import propTypes from 'prop-types';
 
-class Searchbar extends Component {
-  state = {
-    searchName: '',
+const Searchbar = ({ onSubmit }) => {
+  const [searchName, setSearchName] = useState('');
+
+  const handleSearchBar = e => {
+    setSearchName(e.currentTarget.value);
   };
 
-  handleSearchBar = e => {
-    this.setState({ searchName: e.currentTarget.value });
-  };
-
-  onSubmitSearchName = e => {
+  const onSubmitSearchName = e => {
     e.preventDefault();
-    this.props.onSubmit(this.state.searchName);
-    // this.reset();
+    onSubmit(searchName);
   };
 
-  reset = () => {
-    this.setState({ searchName: '' });
-  };
+  return (
+    <>
+      {' '}
+      <SearchHeader class="searchbar">
+        <SearchForm class="form" onSubmit={onSubmitSearchName}>
+          <SearchButton type="submit" class="button">
+            <ImSearch />
+            <SearchLabel class="button-label">Search</SearchLabel>
+          </SearchButton>
 
-  render() {
-    return (
-      <>
-        {' '}
-        <SearchHeader class="searchbar">
-          <SearchForm class="form" onSubmit={this.onSubmitSearchName}>
-            <SearchButton type="submit" class="button">
-              <ImSearch />
-              <SearchLabel class="button-label">Search</SearchLabel>
-            </SearchButton>
-
-            <SearchInput
-              class="input"
-              type="text"
-              onChange={this.handleSearchBar}
-              autocomplete="off"
-              autofocus
-              placeholder="Search images and photos"
-            />
-          </SearchForm>
-        </SearchHeader>
-      </>
-    );
-  }
-}
+          <SearchInput
+            class="input"
+            type="text"
+            onChange={handleSearchBar}
+            autocomplete="off"
+            autofocus
+            placeholder="Search images and photos"
+          />
+        </SearchForm>
+      </SearchHeader>
+    </>
+  );
+};
 
 export default Searchbar;
 

@@ -1,5 +1,4 @@
-// import axios from 'axios';
-import React, { Component } from 'react';
+import { useState, useEffect } from 'react';
 import Searchbar from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Wrapper } from './App.styled';
@@ -12,125 +11,115 @@ import {
   Toast,
 } from '../components/Notification/Notification';
 
-class App extends Component {
-  state = {
-    images: [],
-    searchName: '',
-    page: 1,
-    status: 'idle',
-    showModal: false,
-    loadMore: true,
-    modalImage: null,
-  };
+export const App = () => {
+  const [images, setImages] = useState([]);
+  const [searchName, setSearchName] = useState('');
+  const [page, setPage] = useState(1);
+  const [status, setStatus] = useState('idle');
+  const [showModal, setShowModal] = useState(false);
+  const [loadMore, setLoadMore] = useState(true);
+  const [modalImage, setModalImage] = useState(null);
 
-  async componentDidUpdate(_, prevState) {
-    const prevQuery = prevState.searchName;
-    const newOuery = this.state.searchName;
-    const prevPage = prevState.page;
-    const newPage = this.state.page;
+  useEffect(() => {
+    if (searchName === '') {
+      return;
+    }
 
-    if (prevQuery !== newOuery || prevPage !== newPage) {
-      this.setState({ status: 'pending', loadMore: true });
+    const getFetch = async () => {
+      setStatus('pending');
+      setLoadMore(true);
 
       try {
-        const result = await getImages(newOuery, newPage);
+        const result = await getImages(searchName, page);
 
         if (!result.length) {
           throw new Error();
         }
 
         if (result.length < 12) {
-          this.setState({ loadMore: false });
+          setLoadMore(false);
         }
-        this.setState(prevState => ({
-          images: [...prevState.images, ...result],
-          status: 'resolved',
-        }));
+        setImages(prevState => [...prevState, ...result]);
+        setStatus('resolved');
       } catch (err) {
-        this.setState({ status: 'rejected' });
+        setStatus('rejected');
         NotificationError();
       }
-    }
+    };
+    getFetch();
+  }, [searchName, page]);
+
+  // const reset = () => {
+  //   setSearchName('');
+  // };
+
+  const toggleModal = () => {
+    setShowModal(!showModal);
+  };
+
+  const loadMoreImg = () => {
+    setPage(loadMore => loadMore + 1);
+  };
+
+  const findModalImage = (id, img, tags) => {
+    setModalImage({ id: id, img: img, tags: tags });
+  };
+
+  const onSubmitBar = name => {
+    setPage(1);
+    setImages([]);
+    setSearchName(name);
+  };
+
+  if (status === 'idle') {
+    return (
+      <Wrapper>
+        <Searchbar onSubmit={onSubmitBar} />
+      </Wrapper>
+    );
   }
 
-  reset = () => {
-    this.setState({ searchName: '' });
-  };
-
-  toggleModal = () => {
-    this.setState(({ showModal }) => ({ showModal: !showModal }));
-  };
-
-  loadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
-  };
-
-  findModalImage = (id, img, tags) => {
-    this.setState({ modalImage: { id: id, img: img, tags: tags } });
-    console.log(this.modalImage);
-  };
-
-  onSubmitBar = name => {
-    this.setState({ page: 1, images: [], searchName: name });
-  };
-
-  render() {
-    const { images, status, showModal, loadMore, modalImage } = this.state;
-
-    if (status === 'idle') {
-      return (
-        <Wrapper>
-          <Searchbar onSubmit={this.onSubmitBar} />
-        </Wrapper>
-      );
-    }
-
-    if (status === 'pending') {
-      return (
-        <Wrapper>
-          <Searchbar onSubmit={this.onSubmitBar} />
-          <ImageGallery
-            images={images}
-            modalImage={this.findModalImage}
-            toggleModal={this.toggleModal}
-          />
-          <Loader />
-        </Wrapper>
-      );
-    }
-
-    if (status === 'resolved') {
-      return (
-        <Wrapper>
-          <Searchbar onSubmit={this.onSubmitBar} />
-          <ImageGallery
-            images={images}
-            modalImage={this.findModalImage}
-            toggleModal={this.toggleModal}
-          />
-
-          {showModal && (
-            <Modal onClose={this.toggleModal} modalImage={modalImage} />
-          )}
-
-          {loadMore && <Button loadMore={this.loadMore} />}
-          <Toast result={this.result} />
-        </Wrapper>
-      );
-    }
-
-    if (status === 'rejected') {
-      return (
-        <Wrapper>
-          <Searchbar onSubmit={this.onSubmitBar} />
-          <Toast />
-        </Wrapper>
-      );
-    }
+  if (status === 'pending') {
+    return (
+      <Wrapper>
+        <Searchbar onSubmit={onSubmitBar} />
+        <ImageGallery
+          images={images}
+          modalImage={findModalImage}
+          toggleModal={toggleModal}
+        />
+        <Loader />
+      </Wrapper>
+    );
   }
-}
+
+  if (status === 'resolved') {
+    return (
+      <Wrapper>
+        <Searchbar onSubmit={onSubmitBar} />
+        <ImageGallery
+          images={images}
+          modalImage={findModalImage}
+          toggleModal={toggleModal}
+        />
+
+        {showModal && <Modal onClose={toggleModal} modalImage={modalImage} />}
+
+        {loadMore && <Button loadMore={loadMoreImg} />}
+        <Toast />
+      </Wrapper>
+    );
+  }
+
+  if (status === 'rejected') {
+    return (
+      <Wrapper>
+        <Searchbar onSubmit={onSubmitBar} />
+        <Toast />
+      </Wrapper>
+    );
+  }
+};
 
 export default App;
 
