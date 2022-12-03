@@ -49,10 +49,6 @@ export const App = () => {
     getFetch();
   }, [searchName, page]);
 
-  // const reset = () => {
-  //   setSearchName('');
-  // };
-
   const toggleModal = () => {
     setShowModal(!showModal);
   };
